@@ -1,0 +1,134 @@
+% !TeX program = lualatex
+
+\documentclass[aspectratio=169,xcolor={dvipsnames}
+,hide notes
+%,show only notes
+%,show notes on second screen=right
+]{beamer}
+\usetheme[background=light, numbering=fraction]{metropolis}
+\usepackage{appendixnumberbeamer}
+
+%\usepackage[T1]{fontenc}
+
+\usepackage{bm}
+
+\usepackage[labelfont=bf,textfont={it}]{caption}
+\usepackage{subcaption}
+\captionsetup[figure]{justification=centering}
+\captionsetup[subfigure]{justification=centering}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc, fit, positioning}
+
+%\usepackage{fontspec}
+%\setsansfont{Fira Sans Mono}
+
+\usepackage{etoolbox}
+\usepackage[binary-units]{siunitx}
+\robustify\bfseries
+\sisetup{detect-all, range-phrase=--, range-units=single}
+
+\usepackage[UKenglish]{babel}
+\usepackage{csquotes}
+
+\usepackage{amssymb}
+
+\usepackage{lipsum}
+\usepackage[basic]{complexity}
+\usepackage[super,negative]{nth}
+
+\usepackage{booktabs}
+
+%bib
+\usepackage[maxnames=3,maxbibnames=99,mincrossrefs=5,sortcites
+,backend=bibtex
+,style=authortitle
+]{biblatex}
+\addbibresource{papers.bib}
+\addbibresource{confs-journs.bib}
+
+\newcommand{\acval}[3]{\ensuremath{\operatorname{\hat{q}}(#1, #2, #3)}}
+\newcommand{\wvec}[1]{\ensuremath{\bm{w}_{#1}}}
+
+\makeatletter
+\DeclareRobustCommand{\rvdots}{%
+	\vbox{
+		\baselineskip4\p@\lineskiplimit\z@
+		\kern-\p@
+		\hbox{.}\hbox{.}\hbox{.}
+}}
+\makeatother
+
+% official colours
+\definecolor{uofguniversityblue}{rgb}{0, 0.219608, 0.396078}
+
+\definecolor{uofgheather}{rgb}{0.356863, 0.32549, 0.490196}
+\definecolor{uofgaquamarine}{rgb}{0.603922, 0.72549, 0.678431}
+\definecolor{uofgslate}{rgb}{0.309804, 0.34902, 0.380392}
+\definecolor{uofgrose}{rgb}{0.823529, 0.470588, 0.709804}
+\definecolor{uofgmocha}{rgb}{0.709804, 0.564706, 0.47451}
+
+\definecolor{uofglawn}{rgb}{0.517647, 0.741176, 0}
+\definecolor{uofgcobalt}{rgb}{0, 0.615686, 0.92549}
+\definecolor{uofgturquoise}{rgb}{0, 0.709804, 0.819608}
+\definecolor{uofgsunshine}{rgb}{1.0, 0.862745, 0.211765}
+\definecolor{uofgpumpkin}{rgb}{1.0, 0.72549, 0.282353}
+\definecolor{uofgthistle}{rgb}{0.584314, 0.070588, 0.447059}
+\definecolor{uofgpillarbox}{rgb}{0.701961, 0.047059, 0}
+\definecolor{uofglavendar}{rgb}{0.356863, 0.301961, 0.580392}
+
+\definecolor{uofgsandstone}{rgb}{0.321569, 0.278431, 0.231373}
+\definecolor{uofgforest}{rgb}{0, 0.317647, 0.2}
+\definecolor{uofgburgundy}{rgb}{0.490196, 0.133333, 0.223529}
+\definecolor{uofgrust}{rgb}{0.603922, 0.227451, 0.023529}
+
+\definecolor{inferno0}{rgb}{0.001462 0.000466 0.013866}
+\definecolor{inferno64}{rgb}{0.341500 0.062325 0.429425}
+\definecolor{inferno128}{rgb}{0.735683 0.215906 0.330245}
+\definecolor{inferno192}{rgb}{0.978422 0.557937 0.034931}
+\definecolor{inferno255}{rgb}{0.988362 0.998364 0.644924}
+
+%picky abt et al.
+\usepackage{xpatch}
+
+\makeatletter\let\expandableinput\@@input\makeatother
+
+\xpatchbibmacro{name:andothers}{%
+	\bibstring{andothers}%
+}{%
+	\bibstring[\emph]{andothers}%
+}{}{}
+
+%opening!
+
+\usepackage{cleveref}
+\newcommand{\crefrangeconjunction}{--}
+
+\usepackage{fontawesome}
+
+\addtobeamertemplate{footnote}{\vspace{-6pt}\advance\hsize-0.5cm}{\vspace{6pt}}
+\makeatletter
+% Alternative A: footnote rule
+\renewcommand*{\footnoterule}{\kern -3pt \hrule \@width 2in \kern 8.6pt}
+% Alternative B: no footnote rule
+% \renewcommand*{\footnoterule}{\kern 6pt}
+\makeatother
+
+%-------------------------------------%
+%-------------------------------------%
+
+\title{ESnet6 HighTouch yada yada Collector stats eh?}
+\author{Kyle A. Simpson\\
+	\small{\faGithub{} \href{https://github.com/felixmcfelix}{FelixMcFelix} \hspace{0.5em} \faGlobe{} \url{https://mcfelix.me}}}
+\institute{University of Glasgow}
+\date{\nth{29} August, 2019}
+
+\begin{document}
+	
+\maketitle
+
+\begin{frame}{Future Work}
+	There's... a lot to do!
+\end{frame}
+	
+\end{document}
