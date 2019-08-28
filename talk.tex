@@ -114,21 +114,97 @@
 % \renewcommand*{\footnoterule}{\kern 6pt}
 \makeatother
 
+\usepackage[export]{adjustbox}
+
 %-------------------------------------%
 %-------------------------------------%
 
-\title{ESnet6 HighTouch yada yada Collector stats eh?}
-\author{Kyle A. Simpson\\
-	\small{\faGithub{} \href{https://github.com/felixmcfelix}{FelixMcFelix} \hspace{0.5em} \faGlobe{} \url{https://mcfelix.me}}}
+\title{ESnet6 HighTouch Collector: Overview and Future}
+\author{\vspace{-1em}\textbf{Kyle A. Simpson}\\
+	\faEnvelopeO{} \href{mailto:k.simpson.1@research.gla.ac.uk}{\nolinkurl{k.simpson.1@research.gla.ac.uk}}\\
+	\vspace{1em}\small{\faGithub{} \href{https://github.com/felixmcfelix}{FelixMcFelix} \hspace{0.5em} \faGlobe{} \url{https://mcfelix.me}}}
 \institute{University of Glasgow}
 \date{\nth{29} August, 2019}
 
 \begin{document}
-	
+
+% title fun, including Org logos....
+\begin{frame}
 \maketitle
+\begin{tikzpicture}[overlay, remember picture]
+\node[above right=0.8cm and 0.9cm of current page.south west] (esnet-logo) {\includegraphics[width=2.75cm]{esnet-logo-min}};
+\node[right=1cm of esnet-logo] {\adjincludegraphics[height=2cm,trim={0 {.4\height} 0 {.05\height}},clip]{uofg}};
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Introduction}
+	Describe what we have here first, and then go into motivation in the next section.
+\end{frame}
+
+\section{Why?}
+
+\begin{frame}{Large Networks}
+	Yeah!
+	
+	CWnd estimation \footcite{DBLP:conf/sosr/GhasemiBR17}.
+	
+	SRTT? \footcite{DBLP:journals/ccr/KarnP87}
+\end{frame}
+
+\begin{frame}{Accuracy?}
+	Show like two packets here, how we get dts, etc...
+\end{frame}
+
+\section{How is it designed?}
+
+\begin{frame}{Analysis and Algorithms}
+	Yeah!
+	
+	CWnd estimation \footcite{DBLP:conf/sosr/GhasemiBR17}.
+	
+	SRTT? \footcite{DBLP:journals/ccr/KarnP87}
+\end{frame}
+
+\begin{frame}{The Pipeline}
+	
+\end{frame}
+
+\begin{frame}{Serialisation?}
+	
+\end{frame}
+
+\begin{frame}{Speed}
+	
+\end{frame}
+
+\section{So, what cool things can we see?}
+
+\begin{frame}{How do normal flows look?}
+	content...
+\end{frame}
+
+\begin{frame}{Can we infer different TCP flavours within transit networks?}
+	content...
+\end{frame}
+
+\begin{frame}{Probably!}
+	content...
+\end{frame}
 
 \begin{frame}{Future Work}
 	There's... a lot to do!
-\end{frame}
 	
+	Turning analyses on/off...
+	
+	Correlating results from smartnics---need to sync!\footcite{DBLP:conf/sosr/KannanJC19}
+	
+	
+\end{frame}
+
+\appendix
+
+\begin{frame}[allowframebreaks]{References}
+	\printbibliography[heading=none]
+\end{frame}
+
 \end{document}
