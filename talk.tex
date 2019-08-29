@@ -1,10 +1,10 @@
 % !TeX program = lualatex
 
 \documentclass[aspectratio=169,xcolor={dvipsnames}
-%,hide notes
-,notes
+%,notes=only
+%,notes
 %,show notes on second screen=right
-,handout
+%,handout
 ]{beamer}
 \usetheme[background=light, numbering=fraction]{metropolis}
 \usepackage{appendixnumberbeamer}
@@ -171,6 +171,18 @@
 	\item Mirror traffic, feed into SmartNIC, convert to digest and timestamp.
 }
 
+\begin{frame}{Where does the collector fit in?}
+	\centering
+	\vspace{1em}
+	\adjincludegraphics[width=\linewidth]{sys-overview}
+\end{frame}
+
+\note[itemize]{
+	\item Literally just run through it.
+	\item Custom firmware, configurable filtering via control plane
+	\item Several of these configs per edge node to meet service/analysis requirements
+}
+
 \begin{frame}{Looking through the microscope...}
 %	Show like two packets here, how we get dts, etc...
 	\centering
@@ -236,11 +248,7 @@
 	\item The difference? Smoother.
 }
 
-\begin{frame}{Where does the collector fit in?}
-	?? Copy-paste diagram from poster into here...
-\end{frame}
-
-\section{How is it designed?}
+\section{How is the Collector designed?}
 
 \begin{frame}{How does it operate?}
 	\begin{itemize}[<+- | alert@+>]
@@ -375,6 +383,10 @@
 	\end{itemize}
 \end{frame}
 
+\note[itemize]{
+	\item Algos -- say what each measure can reveal?
+}
+
 \begin{frame}{Serialisation}
 	\begin{itemize}[<+- | alert@+>]
 		\item Each pipeline has a dedicated writing space, guarded by an RWLock.
@@ -383,9 +395,21 @@
 	\end{itemize}
 \end{frame}
 
+\note[itemize]{
+	\item Just run through this
+	\item InfluxDB writes similarly batched here, sent via fresh goroutine though...
+}
+
 \begin{frame}{Instrumentation}
 	\includegraphics[width=\linewidth]{telemetry}
 \end{frame}
+
+\note[itemize]{
+	\item Prometheus integration.
+	\item Prometheus pulls performance stats from stages of the pipeline.
+	\item We update these fairly rarely to minimise impact...
+	\item Many other stats provided by Go runtime (Memory, GC, thread count).
+}
 
 \section{So, what cool things can we see?}
 
@@ -396,19 +420,42 @@
 	\end{figure}
 \end{frame}
 
+\note[itemize]{
+	\item Cubic at 1Gbps APPLICATION-LIMITED
+	\item Blue dots are point rates
+	\item Red line is sliding window
+	\item counter intuitive
+	\item cannot take average to return to this redline: is actually weighted average
+	\item many slow packets drag said average down
+	\item analytically, weighted average (by dts) equates to same as sliding window
+}
+
 \begin{frame}{Lossy flows?}
 	\begin{figure}
 		\resizebox{0.7\linewidth}{!}{\includegraphics{plots/1gb-1drop-point-wrate-showtx}}
-		\caption{TCP Cubic, 1Gbps, \SI{1}{\percent} loss}
+		\caption{TCP Cubic, [Intended] 1Gbps, \SI{1}{\percent} loss}
 	\end{figure}
 \end{frame}
+
+\note[itemize]{
+	\item Intended 1Gbps, but packet loss drags down to 1Mbps
+	\item Purple is throughput, orange is goodput
+	\item Blue shows cumulative Retxs
+	\item One loss causes a speed drop, so why so many ReTxs? Several ReTxs seem to correspond to any one loss in this test.
+}
 
 \begin{frame}{Multiplexed flows?}
 	\begin{figure}
 		\resizebox{0.7\linewidth}{!}{\includegraphics{plots/n-point-wrate-combo}}
-		\caption{TCP Cubic, 1Gbps, 2 flows}
+		\caption{TCP Cubic, 10Gbps, 2 flows}
 	\end{figure}
 \end{frame}
+
+\note[itemize]{
+	\item Two Cubic flows sharing a 10Gbps link.
+	\item Both lines are sliding window throughput.
+	\item One has all the link to itself, and then falls as another comes in!
+}
 
 \begin{frame}{Can we infer different TCP flavours within transit networks?}
 	Why might we care about this? \pause
@@ -417,6 +464,11 @@
 	
 	Yet users expect fair service...
 \end{frame}
+
+\note[itemize]{
+	\item In flavour v flavour, some may take more than fair share
+	\item We also know that delay-based flavours like BBR are probably going to behave well.
+}
 
 \begin{frame}{Probably! In rates...}
 	\begin{columns}
@@ -435,6 +487,12 @@
 	\end{columns}
 \end{frame}
 
+\note[itemize]{
+	\item Point rates for cubic are wonderfully structural -- because it is delay-based! Huge empty band.
+	\item can observe aspects of its control loop at this scale -- upticks, downticks...
+	\item Cubic waits on nothing but cwnd, so fills in this band more uniformly
+}
+
 \begin{frame}{Probably! In arrival times...}
 	\begin{columns}
 		\begin{column}{0.5\linewidth}
@@ -452,19 +510,33 @@
 	\end{columns}
 \end{frame}
 
+\note[itemize]{
+	\item Interesting differences here too. LOGSCALE
+	\item Application-limited!!!
+	\item Point out average speed line -- 70 percent along first box.
+	\item Cubic sends very little in this region -- but more above the average speedline too.
+	\item BBR clusters within this region -- between the very slow packets and the sliding window speed.
+	\item Massive spike sub-1-microsecond -- may be interesting dynamics outside this region too.
+}
+
 \begin{frame}{Future Work}
-	There's... a lot to do!
-	
-	Turning analyses on/off...
-	
-	Correlating results from smartnics---need to sync!\footcite{DBLP:conf/sosr/KannanJC19}
-	
-	Estimate 'whole' RTT from CWnd estimation?
-	
-	IPv6
-	
-	Microburst detection\footcite{DBLP:conf/sigcomm/ChenFKRR18}
+	\begin{itemize}[<+- | alert@+>]
+		\item Configure \emph{which} analyses are computed.
+		\item IPv6 support.
+		\item Correlating results from SmartNICs\footcite{DBLP:conf/sosr/KannanJC19}.
+		\item Microburst detection\footcite{DBLP:conf/sigcomm/ChenFKRR18}.
+		\item Estimate 'whole' RTT from CWnd estimation?
+		\item Programmatically determine TCP flavour---LSTMs, classify by clusters of $dt$s?
+	\end{itemize}
 \end{frame}
+
+\note[itemize]{
+	\item Performing all analyses causes a 1.5x slowdown, can tag flows in smartnic.
+	\item clock drift between NICs, especially nasty as nanosecond scale. need to sync!
+	\item due to flow bhav, can see half-rtt, but cwnd may allow us to look back to see packets which fall out
+	
+	\item very interested in seeing if TCP flavour can be worked out online (through some means of time-series analysis).
+}
 
 \begin{frame}[standout]
 	The \alert{HighTouch Collector} allows high-throughput flow analysis at the edge of \alert{ESnet6}. \pause
