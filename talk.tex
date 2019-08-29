@@ -510,6 +510,47 @@
 	\end{columns}
 \end{frame}
 
+\begin{frame}{What about link-limited traffic? (Rates)}
+	\begin{columns}
+		\begin{column}{0.5\linewidth}
+			\begin{figure}
+				\resizebox{\linewidth}{!}{\includegraphics{plots/ll/bbr-point-rates}}
+				\caption{TC'd BBR Rates}
+			\end{figure}
+		\end{column}
+		\begin{column}{0.5\linewidth}
+			\begin{figure}
+				\resizebox{\linewidth}{!}{\includegraphics{plots/ll/cubic-point-rates}}
+				\caption{TC'd Cubic Rates}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{The differences are subtler...}
+	\begin{figure}
+		\resizebox{0.6\linewidth}{!}{\includegraphics{plots/ll/bbr-point-rates-zoom}}
+		\caption{TC'd Cubic Rates (Zoom)}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{What about link-limited traffic? (IATs)}
+	\begin{columns}
+		\begin{column}{0.5\linewidth}
+			\begin{figure}
+				\resizebox{\linewidth}{!}{\includegraphics{plots/ll/bbr-dts}}
+				\caption{TC'd BBR IATs}
+			\end{figure}
+		\end{column}
+		\begin{column}{0.5\linewidth}
+			\begin{figure}
+				\resizebox{\linewidth}{!}{\includegraphics{plots/ll/cubic-dts}}
+				\caption{TC'd Cubic IATs}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
 \note[itemize]{
 	\item Interesting differences here too. LOGSCALE
 	\item Application-limited!!!
