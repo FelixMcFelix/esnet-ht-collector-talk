@@ -1,12 +1,14 @@
 % !TeX program = lualatex
 
 \documentclass[aspectratio=169,xcolor={dvipsnames}
-,hide notes
-%,show only notes
+%,hide notes
+,notes
 %,show notes on second screen=right
+,handout
 ]{beamer}
 \usetheme[background=light, numbering=fraction]{metropolis}
 \usepackage{appendixnumberbeamer}
+\usepackage{pgfpages}
 
 %\usepackage[T1]{fontenc}
 
@@ -115,6 +117,7 @@
 \makeatother
 
 \usepackage[export]{adjustbox}
+\usetikzlibrary{arrows.meta, calc, fit, positioning, shapes.misc}
 
 %-------------------------------------%
 %-------------------------------------%
@@ -138,57 +141,315 @@
 \end{frame}
 
 \begin{frame}{Introduction}
-	Describe what we have here first, and then go into motivation in the next section.
+	Briefly, what is the collector? \alert{What can it do?} \pause
+	\begin{itemize}[<+- | alert@+>]
+		\item Measure flow performance metrics.
+		\item Stateful TCP analysis.
+		\item Acts on every packet.
+		\item \emph{Fine-grained, line-rate}.
+	\end{itemize}
 \end{frame}
+
+\note[itemize]{
+	\item What metrics? Flow rate, packet losses, ...
+	\item Overall health.
+	\item Elaborate on "every packet" -- this isn't what existing measurement does.
+}
 
 \section{Why?}
 
 \begin{frame}{Large Networks}
-	Yeah!
-	
-	CWnd estimation \footcite{DBLP:conf/sosr/GhasemiBR17}.
-	
-	SRTT? \footcite{DBLP:journals/ccr/KarnP87}
+	\centering
+	\adjincludegraphics[width=\linewidth, trim={0 {.1\height} 0 {.2\height}},clip]{esnet-topol}
 \end{frame}
 
-\begin{frame}{Accuracy?}
-	Show like two packets here, how we get dts, etc...
+\note[itemize]{
+	\item Wide-area networks like this!
+	\item High level---thousands of flows, high throughput...
+	\item How do we perform fine-grained analysis here?
+	\item Take measurements from the edge...
+	\item Mirror traffic, feed into SmartNIC, convert to digest and timestamp.
+}
+
+\begin{frame}{Looking through the microscope...}
+%	Show like two packets here, how we get dts, etc...
+	\centering
+	\resizebox{0.6\linewidth}{!}{
+	\begin{tikzpicture}
+		[packet/.style={draw, fill=uofgsunshine}]
+		\node[packet] (p1) {$p_1$: 1500B};
+		\node[packet, right= 1cm of p1] (p2) {$p_2$: 800B};
+		
+		\node at ($(p1.south west) - (0,1)$) (t1) {$t_1$};
+		\node at ($(p2.south west) - (0,1)$) (t2) {$t_2$};
+		
+		\draw[->] (t1.north)--(p1.south west);
+		\draw[->] (t2.north)--(p2.south west);
+		
+		\onslide<2->{\draw[->] (t1) -- node[below]{$\mathit{dt}_2=t_2-t_1$} (t2);};
+		\onslide<3->{\node at ($(t1)!0.5!(t2) + (0,-0.75)$) (r1) {$\therefore r_1=p_1/\mathit{dt}_2$};};
+	\end{tikzpicture} 
+	}
+	
+\end{frame}
+
+\note[itemize]{
+	\item If we want accurate analysis, we need accurate timing.
+	\item Timestamps occur at ingress..
+	\item What assumptions? frame gaps (between p1's egress and t2) are negligible.
+}
+
+\begin{frame}{...and zooming out.}
+	%	Show like two packets here, how we get dts, etc...
+	\centering
+	\resizebox{0.9\linewidth}{!}{
+		\begin{tikzpicture}
+		[packet/.style={draw, fill=uofgsunshine}]
+		\node[packet] (p1) {$p_1$: 1500B};
+		\node[packet, right= 1cm of p1] (p2) {$p_2$: 800B};
+		\node[right= 1cm of p2] (p3) {...};
+		\node[packet, right= 1cm of p3] (p4) {$p_{n-1}$: 1500B};
+		\node[packet, right= 1cm of p4] (p5) {$p_n$: 1500B};
+		
+		\node at ($(p1.south west) - (0,1)$) (t1) {$t_1$};
+		\node at ($(p2.south west) - (0,1)$) (t2) {$t_2$};
+		\node at ($(p4.south west) - (0,1)$) (t4) {$t_{n-1}$};
+		\node at ($(p5.south west) - (0,1)$) (t5) {$t_{n}$};
+		
+		\draw[->] (t1.north)--(p1.south west);
+		\draw[->] (t2.north)--(p2.south west);
+		\draw[->] (t4.north)--(p4.south west);
+		\draw[->] (t5.north)--(p5.south west);
+		
+		\onslide<2->{
+			\node[below = 2cm of p3] (suppose) {Look over a \emph{sliding window}, size e.g., $W=n-2$.};
+			\onslide<2->{\draw[-, thick, uofgpumpkin] (t2.south) -- node[below]{$W$} (t5.south);};
+		};
+		\onslide<3->{\node[below = 0.05cm of suppose] (formula) {$R_n=\frac{\sum_{a=n-W}^{n-1} p_a}{t_n - t_{n-W}}$.};};
+		\end{tikzpicture} 
+	}	
+\end{frame}
+
+\note[itemize]{
+	\item The traditional view -- a sliding window.
+	\item Typically larger $n$ than 5, 100 to 1000 depending on signal...
+	\item The difference? Smoother.
+}
+
+\begin{frame}{Where does the collector fit in?}
+	?? Copy-paste diagram from poster into here...
 \end{frame}
 
 \section{How is it designed?}
 
-\begin{frame}{Analysis and Algorithms}
-	Yeah!
-	
-	CWnd estimation \footcite{DBLP:conf/sosr/GhasemiBR17}.
-	
-	SRTT? \footcite{DBLP:journals/ccr/KarnP87}
+\begin{frame}{How does it operate?}
+	\begin{itemize}[<+- | alert@+>]
+		\item INPUT: Telemetry packets from SmartNICs.
+		\item OUTPUT: Live time series of analysed data.
+		\item OUTPUT: Mid-term storage of analysed data (\alert{time-series database}).
+	\end{itemize}
 \end{frame}
+
+\note[itemize]{
+	\item Live time series is most crucial analysis (security etc.)
+	\item Mid-term storage for all other analyses -- only one consumer of each stream.
+}
 
 \begin{frame}{The Pipeline}
-	
+	\resizebox{\linewidth}{!}{
+		\centering
+		\begin{tikzpicture}
+			[stage/.style={draw, rounded rectangle, fill=uofgmocha, align=center},
+			pipeline/.style={stage, fill=uofgrose},
+			ws/.style={stage, fill=uofgslate, text=white},
+			store/.style={stage, fill=uofgsunshine}]
+			\node[stage](parse) {Parse};
+			\node[stage, right = 0.4cm of parse](dispatch) {Dispatch};
+
+			\node[pipeline, above right = 0.1cm and 0.7cm of dispatch](ana0) {Analyser 0};
+			\node[pipeline, right = 0.3cm of ana0](serialiser0) {Serialiser 0};
+			
+			\node[pipeline, below right = 0.1cm and 0.7cm of dispatch](anan) {Analyser $n$};
+			\node[pipeline, right = 0.3cm of anan](serialisern) {Serialiser $n$};
+			
+			\node at ($(ana0.south)!0.4!(anan.north)$) {$\vdots$};
+			\node at ($(serialiser0.south)!0.4!(serialisern.north)$) {$\vdots$};
+			
+			\node[store, right = 7.4cm of parse](storage) {Shared\\Storage};
+			
+			\node[store, below = 1cm of storage] (tsdb) {Time-series\\Database};
+			
+			\node[ws, above right = 0.2cm and 2cm of storage](ws0) {WS Client 0};
+			\node[ws, below right = 0.2cm and 2cm of storage](wsm) {WS Client $m$};
+			\node at ($(ws0.south)!0.4!(wsm.north)$) {$\vdots$};
+			
+			\draw[thick, ->] (parse)--(dispatch);
+			\draw[thick, ->] (dispatch)--(ana0.west);
+			\draw[thick, ->] (dispatch)--(anan.west);
+			
+			\draw[thick, ->] (ana0)--(serialiser0);
+			\draw[thick, ->] (anan)--(serialisern);
+			
+			\draw[thick, ->] (serialiser0)--(storage);
+			\draw[thick, ->] (serialisern)--(storage);
+			\draw[dashed, ->] (serialiser0)--(tsdb);
+			\draw[dashed, ->] (serialisern)--(tsdb);
+			
+			\draw[<->] (storage)--(ws0.west);
+			\draw[<->] (storage)--(wsm.west);
+		\end{tikzpicture}
+	}
+	Why design like this?
+	\begin{itemize}
+		\item One thread per stage $\implies$ increases throughput.
+		\item More {\color{uofgrose}pipelines} $\implies$ more flows at max throughput.
+	\end{itemize}
 \end{frame}
 
-\begin{frame}{Serialisation?}
+\note[itemize]{
+	\item What does parse do? Guaranteed well-formedness, so just checks for VLAN tags and computes byte slice.
+	\item Explain the pipeline dispatch mechanism.
+	\item Partner threads kept together.
+	\item Parse and dispatch cannot be multithreaded, so small stage duration CRUCIAL.
+	\item Writes to storage? Explain batching and its necessity.
+}
+
+\begin{frame}{Performance}
+	\resizebox{\linewidth}{!}{
+		\centering
+		\begin{tikzpicture}
+		[stage/.style={draw, rounded rectangle, fill=uofgmocha, align=center},
+		pipeline/.style={stage, fill=uofgrose},
+		ws/.style={stage, fill=uofgslate, text=white},
+		store/.style={stage, fill=uofgsunshine}]
+		\node[stage](parse) {Parse};
+		\node[stage, right = 0.4cm of parse](dispatch) {Dispatch};
+		
+		\node[pipeline, above right = 0.1cm and 0.7cm of dispatch](ana0) {Analyser 0};
+		\node[pipeline, right = 0.3cm of ana0](serialiser0) {Serialiser 0};
+		
+		\node[pipeline, below right = 0.1cm and 0.7cm of dispatch](anan) {Analyser $n$};
+		\node[pipeline, right = 0.3cm of anan](serialisern) {Serialiser $n$};
+		
+		\node at ($(ana0.south)!0.4!(anan.north)$) {$\vdots$};
+		\node at ($(serialiser0.south)!0.4!(serialisern.north)$) {$\vdots$};
+		
+		\draw[thick, ->] (parse)--(dispatch);
+		\draw[thick, ->] (dispatch)--(ana0.west);
+		\draw[thick, ->] (dispatch)--(anan.west);
+		
+		\draw[thick, ->] (ana0)--(serialiser0);
+		\draw[thick, ->] (anan)--(serialisern);
+		
+		\onslide<2->{
+			\node[below = 1cm of parse] (parse-pps) {\scriptsize \alert{1300 kpps}};
+			\node[below = 1cm of dispatch] (dispatch-pps) {\scriptsize \alert{775 kpps}};
+			
+			\node[right = 0.1cm of dispatch-pps] (ana-pps) {\scriptsize \alert{$n\times[310,485]$ kpps}};
+			\node[right = 0.2cm of ana-pps] (ser-pps) {\scriptsize \alert{$n\times675$ kpps}};
+		};
 	
+		\onslide<3->{
+			\node[below right = 0.2cm and -0.7cm of parse-pps] (parse-rate) {\scriptsize \SI{63.5}{\giga\bit\per\second} Total};
+			
+			\node[right = 1cm of parse-rate] (ana-rate) {\scriptsize \SIrange{22.3}{34.9}{\giga\bit\per\second} Per Flow};
+		};
+		\end{tikzpicture}
+	}	
 \end{frame}
 
-\begin{frame}{Speed}
-	
+\note[itemize]{
+	\item Be clear that the Gbps measure reflect Jumbo frames.
+	\item maybe mention that oversubscription on thread count is fine, pipelines sleep!
+	\item results acquired on a considerably weaker machine than target deployment environ.
+}
+
+\begin{frame}{Analysis and Algorithms}
+	\begin{itemize}[<+- | alert@+>]
+		\item Rate monitoring (point vs. sliding window).
+		\item Retransmission and loss detection.
+		\item Initial SRTT estimation.
+		\item Online half-SRTT estimation\footcite{DBLP:journals/ccr/KarnP87}.
+		\item Bytes-in-flight.
+		\item Congestion window estimation\footcite{DBLP:conf/sosr/GhasemiBR17}.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Serialisation}
+	\begin{itemize}[<+- | alert@+>]
+		\item Each pipeline has a dedicated writing space, guarded by an RWLock.
+		\item New messages (only in large batches) are written to this space, with timestamps.
+		\item Any WS sockets iterate over all, take read lock, copy new messages... \alert{Then sleep on a condition variable at the top}.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Instrumentation}
+	\includegraphics[width=\linewidth]{telemetry}
 \end{frame}
 
 \section{So, what cool things can we see?}
 
 \begin{frame}{How do normal flows look?}
-	content...
+	\begin{figure}
+		\resizebox{0.7\linewidth}{!}{\includegraphics{plots/cubic-point-rates}}
+		\caption{TCP Cubic, 1Gbps}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Lossy flows?}
+	\begin{figure}
+		\resizebox{0.7\linewidth}{!}{\includegraphics{plots/1gb-1drop-point-wrate-showtx}}
+		\caption{TCP Cubic, 1Gbps, \SI{1}{\percent} loss}
+	\end{figure}
+\end{frame}
+
+\begin{frame}{Multiplexed flows?}
+	\begin{figure}
+		\resizebox{0.7\linewidth}{!}{\includegraphics{plots/n-point-wrate-combo}}
+		\caption{TCP Cubic, 1Gbps, 2 flows}
+	\end{figure}
 \end{frame}
 
 \begin{frame}{Can we infer different TCP flavours within transit networks?}
-	content...
+	Why might we care about this? \pause
+	
+	\alert{Not all algorithms behave fairly!} \pause
+	
+	Yet users expect fair service...
 \end{frame}
 
-\begin{frame}{Probably!}
-	content...
+\begin{frame}{Probably! In rates...}
+	\begin{columns}
+		\begin{column}{0.5\linewidth}
+			\begin{figure}
+				\resizebox{\linewidth}{!}{\includegraphics{plots/bbr-point-rates}}
+				\caption{BBR point}
+			\end{figure}
+		\end{column}
+		\begin{column}{0.5\linewidth}
+			\begin{figure}
+				\resizebox{\linewidth}{!}{\includegraphics{plots/cubic-point-rates}}
+				\caption{Cubic}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Probably! In arrival times...}
+	\begin{columns}
+		\begin{column}{0.5\linewidth}
+			\begin{figure}
+				\resizebox{\linewidth}{!}{\includegraphics{plots/bbr-dts}}
+				\caption{BBR}
+			\end{figure}
+		\end{column}
+		\begin{column}{0.5\linewidth}
+			\begin{figure}
+				\resizebox{\linewidth}{!}{\includegraphics{plots/cubic-dts}}
+				\caption{Cubic}
+			\end{figure}
+		\end{column}
+	\end{columns}
 \end{frame}
 
 \begin{frame}{Future Work}
@@ -198,7 +459,27 @@
 	
 	Correlating results from smartnics---need to sync!\footcite{DBLP:conf/sosr/KannanJC19}
 	
+	Estimate 'whole' RTT from CWnd estimation?
 	
+	IPv6
+	
+	Microburst detection\footcite{DBLP:conf/sigcomm/ChenFKRR18}
+\end{frame}
+
+\begin{frame}[standout]
+	The \alert{HighTouch Collector} allows high-throughput flow analysis at the edge of \alert{ESnet6}. \pause
+	
+	The \alert{pipelined design} is a core aspect of making this possible. \pause
+	
+	Importantly, we've seen some \alert{interesting flow data}, and the insights we can gain from it. \pause
+	
+	Questions?\\
+	
+	{
+		\scriptsize
+		\vspace{2em}\faEnvelopeO{} \href{mailto:k.simpson.1@research.gla.ac.uk}{\nolinkurl{k.simpson.1@research.gla.ac.uk}}\\
+		\small{\faGithub{} \href{https://github.com/felixmcfelix}{FelixMcFelix} \hspace{0.5em} \faGlobe{} \url{https://mcfelix.me}}
+	}
 \end{frame}
 
 \appendix
